@@ -60,10 +60,10 @@
 		</div>
 
 		<!-- Scatter Plot -->
-		<div class="chart-card">
+		{{-- <div class="chart-card">
 			<h5>Visualisasi Pasien (Scatter)</h5>
 			<canvas id="scatterChart"></canvas>
-		</div>
+		</div> --}}
 
 		<!-- Centroid Plot -->
 		<div class="chart-card">
