@@ -46,6 +46,7 @@ class DatasetCrudController extends CrudController
             ->entity('jenispenyakit')
             ->model(\App\Models\JenisPenyakit::class)
             ->attribute('name');
+        $this->crud->addButtonFromView('top', 'kmeans', 'kmeans', 'end');
         /**
          * Columns can be defined using the fluent syntax:
          * - CRUD::column('price')->type('number');

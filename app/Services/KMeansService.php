@@ -98,7 +98,7 @@ class KMeansService
             'metrics' => [
                 'silhouette' => $silhouette,
                 'wcss' => round($wcss, 2),
-                'davies_bouldin' => round($dbi, 3)
+                // 'davies_bouldin' => round($dbi, 3)
             ],
             'iterations' => $iteration + 1
         ];
