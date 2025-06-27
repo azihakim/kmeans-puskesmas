@@ -8,3 +8,6 @@ Route::get('/', function () {
 });
 Route::get('/cluster-kmeans', [ClusteringController::class, 'proses'])->name('cluster.kmeans');
 Route::get('/elbow', [ClusteringController::class, 'elbow'])->name('cluster.elbow');
+Route::get('/import', function () {
+    return view('import_excell');
+})->name('import');

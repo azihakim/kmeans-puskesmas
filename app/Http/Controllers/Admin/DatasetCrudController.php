@@ -40,6 +40,21 @@ class DatasetCrudController extends CrudController
     protected function setupListOperation()
     {
         CRUD::setFromDb(); // set columns from db columns.
+        CRUD::column('kelompok_usia')
+            ->label('Kelompok Usia')
+            ->type('select')
+            ->entity('kelompokusia')
+            ->model(\App\Models\KelompokUsia::class)
+            ->attribute('name');
+
+        CRUD::column('jenis_kelamin')
+            ->label('Jenis Kelamin')
+            ->type('select_from_array')
+            ->options([
+                1 => 'Laki-laki',
+                2 => 'Perempuan',
+            ]);
+
         CRUD::column('jenis_penyakit')
             ->label('Jenis Penyakit')
             ->type('select')
@@ -51,6 +66,7 @@ class DatasetCrudController extends CrudController
          * Columns can be defined using the fluent syntax:
          * - CRUD::column('price')->type('number');
          */
+        $this->crud->addButtonFromView('top', 'import_excell', 'import_excell');
     }
 
     /**
@@ -63,7 +79,6 @@ class DatasetCrudController extends CrudController
     {
         CRUD::setValidation(DatasetRequest::class);
         CRUD::setFromDb(); // set fields from db columns.
-
         /**
          * Fields can be defined using the fluent syntax:
          * - CRUD::field('price')->type('number');
@@ -72,19 +87,13 @@ class DatasetCrudController extends CrudController
         CRUD::addField([
             'name' => 'kelompok_usia',
             'label' => 'Usia',
-            'type' => 'select_from_array',
-            'options' => [
-                1 => '0-7 hari',
-                2 => '8-28 hari',
-                3 => '1-11 bulan',
-                4 => '1-4 tahun',
-                5 => '5-9 tahun',
-                6 => '10-14 tahun',
-                7 => '15-19 tahun',
-                8 => '20-44 tahun',
-                9 => '45-59 tahun',
-                10 => '>59 tahun',
-            ]
+            'type' => 'select',
+            'entity' => 'kelompokusia',
+            'model' => \App\Models\KelompokUsia::class,
+            'attribute' => 'name',
+            'options' => (function ($query) {
+                return $query->orderByRaw('LEFT(name, 1)')->orderBy('name')->get();
+            }),
         ]);
         CRUD::addField([
             'name' => 'jenis_kelamin',

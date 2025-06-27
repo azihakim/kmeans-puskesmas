@@ -47,7 +47,9 @@ class ClusteringController extends Controller
             }
             return $item;
         });
-
+        return response()->json([
+            'hasil' => $hasil,
+        ]);
         // Kirim semua data ke view
         return view('clustering', [
             'clusters' => $clusters,

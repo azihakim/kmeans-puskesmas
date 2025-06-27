@@ -39,6 +39,10 @@ class Dataset extends Model
     {
         return $this->belongsTo(\App\Models\JenisPenyakit::class, 'jenis_penyakit');
     }
+    public function kelompokusia()
+    {
+        return $this->belongsTo(\App\Models\KelompokUsia::class, 'kelompok_usia');
+    }
     /*
     |--------------------------------------------------------------------------
     | SCOPES

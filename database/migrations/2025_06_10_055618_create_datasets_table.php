@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('pasien');
             $table->foreignId('jenis_penyakit')
                 ->constrained('jenis_penyakits');
-            $table->string('kelompok_usia');
+            $table->foreignId('kelompok_usia')
+                ->constrained('kelompok_usia');
             $table->string('jenis_kelamin');
             $table->tinyInteger('cluster')->nullable();
             $table->timestamps();

@@ -10,7 +10,7 @@ class KMeansService
     protected int $k;
     protected int $maxIterations = 100;
     protected float $tolerance = 1e-6; // Toleransi untuk konvergensi
-
+    protected array $iterationDetails = [];
     public function __construct(int $k = 3)
     {
         $this->k = $k;
@@ -21,8 +21,8 @@ class KMeansService
         // 1. Ambil dan transform data
         $data = Dataset::all()->map(function ($item) {
             return [
-                'usia' => $this->mapUsia($item->kelompok_usia),
-                'jk' => $item->jenis_kelamin === 'Laki-laki' ? 1 : 2,
+                'usia' => $item->kelompok_usia,
+                'jk' => $item->jenis_kelamin,
                 'penyakit' => $item->jenis_penyakit,
                 'id' => $item->id,
                 'dataset_id' => $item->dataset_id
@@ -92,16 +92,75 @@ class KMeansService
         $wcss = $this->calculateWCSS($clusters, $centroids, $points);
         $dbi = $this->calculateDaviesBouldinIndex($clusters, $centroids, $points);
 
-        return [
-            'clusters' => $clusterResults,
-            'centroids' => $centroids,
-            'metrics' => [
-                'silhouette' => $silhouette,
-                'wcss' => round($wcss, 2),
-                // 'davies_bouldin' => round($dbi, 3)
-            ],
-            'iterations' => $iteration + 1
+        // Reset iterationDetails sebelum memulai
+        $this->iterationDetails = [];
+
+        for ($iteration = 0; $iteration < $this->maxIterations; $iteration++) {
+            $clusters = array_fill(0, $this->k, []);
+
+            // Rekam detail iterasi
+            $iterationDetail = [
+                'iteration' => $iteration + 1,
+                'centroids' => $centroids,
+                'point_assignments' => []
+            ];
+
+            // 3. Assign data ke centroid terdekat
+            foreach ($points as $idx => $point) {
+                $distances = array_map(fn($c) => $this->euclideanDistance($point, $c), $centroids);
+                $clusterIndex = array_keys($distances, min($distances))[0];
+                $clusters[$clusterIndex][] = $idx;
+
+                // Rekam detail penugasan titik
+                $iterationDetail['point_assignments'][] = [
+                    'point_index' => $idx,
+                    'point' => $point,
+                    'distances' => $distances,
+                    'assigned_cluster' => $clusterIndex
+                ];
+            }
+
+            // Tambahkan detail iterasi
+            $this->iterationDetails[] = $iterationDetail;
+
+            // 4. Update centroid
+            $newCentroids = [];
+            foreach ($clusters as $cluster) {
+                if (empty($cluster)) {
+                    // Jika cluster kosong, reinisialisasi dengan point random
+                    $newCentroids[] = $points[array_rand($points)];
+                } else {
+                    $clusterPoints = array_map(fn($idx) => $points[$idx], $cluster);
+                    $newCentroids[] = $this->calculateCentroid($clusterPoints);
+                }
+            }
+
+            // 5. Cek konvergensi dengan toleransi
+            if ($this->hasConverged($centroids, $newCentroids)) {
+                break;
+            }
+
+            $previousCentroids = $centroids;
+            $centroids = $newCentroids;
+        }
+
+        $result = [
+            // 'clusters' => $clusterResults,
+            // 'centroids' => $centroids,
+            // 'metrics' => [
+            //     'silhouette' => $silhouette,
+            //     'wcss' => round($wcss, 2),
+            // ],
+            'iterations' => $iteration + 1,
+            'iteration_details' => $this->iterationDetails // Tambahkan detail iterasi
         ];
+
+        return $result;
+    }
+
+    public function getIterationDetails(): array
+    {
+        return $this->iterationDetails;
     }
 
     /**
@@ -262,8 +321,8 @@ class KMeansService
         // Transform data
         $data = Dataset::all()->map(function ($item) {
             return [
-                'usia' => $this->mapUsia($item->kelompok_usia),
-                'jk' => $item->jenis_kelamin === 'Laki-laki' ? 1 : 2,
+                'usia' => $item->kelompok_usia,
+                'jk' => $item->jenis_kelamin,
                 'penyakit' => $item->jenis_penyakit,
                 'id' => $item->id,
                 'dataset_id' => $item->dataset_id
