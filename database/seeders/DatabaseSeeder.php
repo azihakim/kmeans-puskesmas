@@ -16,10 +16,10 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@test.com',
-        // ]);
+        User::factory()->create([
+            'name' => 'Test User',
+            'email' => 'test@test.com',
+        ]);
 
         // Seeder untuk tabel jenis_penyakit
         $jenisPenyakit = [
@@ -260,7 +260,7 @@ class DatabaseSeeder extends Seeder
             ['id' => 235, 'name' => 'Vaginitis'],
             ['id' => 236, 'name' => 'Vulvitis'],
         ];
-        // \DB::table('jenis_penyakits')->insert($jenisPenyakit);
+        \DB::table('jenis_penyakits')->insert($jenisPenyakit);
 
         // Dataset::truncate();
         // $data = [
@@ -268,7 +268,7 @@ class DatabaseSeeder extends Seeder
         //     ['pasien' => 'Budi', 'jenis_penyakit' => '2', 'kelompok_usia' => '5-9 tahun', 'jenis_kelamin' => 'Laki-laki'],
         //     ['pasien' => 'Chika', 'jenis_penyakit' => '3', 'kelompok_usia' => '20-44 tahun', 'jenis_kelamin' => 'Perempuan'],
         //     ['pasien' => 'Dedi', 'jenis_penyakit' => '1', 'kelompok_usia' => '10-14 tahun', 'jenis_kelamin' => 'Laki-laki'],
-        //     ['pasien' => 'Euis', 'jenis_penyakit' => '4', 'kelompok_usia' => '1-4 tahun', 'jenis_kelamin' => 'Perempuan'],
+        //     ['pasien' => 'Euis', 'jenis_penyakit' => '4', 'kelompok_usia' => '1-4 tahun', 'jenis_kelamin' => 'Perempuan'],1
         //     ['pasien' => 'Farhan', 'jenis_penyakit' => '5', 'kelompok_usia' => '15-19 tahun', 'jenis_kelamin' => 'Laki-laki'],
         //     ['pasien' => 'Gita', 'jenis_penyakit' => '6', 'kelompok_usia' => '45-59 tahun', 'jenis_kelamin' => 'Perempuan'],
         //     ['pasien' => 'Heri', 'jenis_penyakit' => '7', 'kelompok_usia' => '>59 tahun', 'jenis_kelamin' => 'Laki-laki'],
