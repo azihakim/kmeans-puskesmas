@@ -6,7 +6,7 @@
 			<div class="card">
 				<div class="card-header">Import Data dari Excel</div>
 				<div class="card-body">
-					<form action="" method="POST" enctype="multipart/form-data">
+					<form action="{{ route('import.store') }}" method="POST" enctype="multipart/form-data">
 						@csrf
 						<div class="mb-3">
 							<label for="excel_file" class="form-label">Pilih File Excel (.xlsx, .xls)</label>

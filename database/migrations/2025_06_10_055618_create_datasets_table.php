@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::create('datasets', function (Blueprint $table) {
             $table->id();
             $table->string('pasien');
-            $table->foreignId('jenis_penyakit')
-                ->constrained('jenis_penyakits');
-            $table->foreignId('kelompok_usia')
-                ->constrained('kelompok_usias');
+            $table->string('jenis_penyakit');
+            $table->string('kelompok_usia');
+            // $table->foreignId('jenis_penyakit')
+            //     ->constrained('jenis_penyakits');
+            // $table->foreignId('kelompok_usia')
+            //     ->constrained('kelompok_usias');
             $table->string('jenis_kelamin');
             $table->tinyInteger('cluster')->nullable();
             $table->timestamps();

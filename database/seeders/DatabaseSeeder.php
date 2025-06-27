@@ -16,10 +16,10 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@test.com',
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@test.com',
+        // ]);
 
         // Seeder untuk tabel jenis_penyakit
         $jenisPenyakit = [
@@ -293,6 +293,6 @@ class DatabaseSeeder extends Seeder
             ['id' => 10, 'name' => '>59 tahun'],
         ];
 
-        \DB::table('kelompok_usias')->insert($kelompokUsia);
+        // \DB::table('kelompok_usias')->insert($kelompokUsia);
     }
 }

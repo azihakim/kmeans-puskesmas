@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClusteringController;
+use App\Http\Controllers\ImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -8,6 +9,5 @@ Route::get('/', function () {
 });
 Route::get('/cluster-kmeans', [ClusteringController::class, 'proses'])->name('cluster.kmeans');
 Route::get('/elbow', [ClusteringController::class, 'elbow'])->name('cluster.elbow');
-Route::get('/import', function () {
-    return view('import_excell');
-})->name('import');
+Route::get('/import', [ImportController::class, 'index'])->name('import');
+Route::post('/import', [ImportController::class, 'import'])->name('import.store');
