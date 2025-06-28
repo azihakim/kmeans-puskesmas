@@ -35,7 +35,7 @@ class Dataset extends Model
     | RELATIONS
     |--------------------------------------------------------------------------
     */
-    public function jenispenyakit()
+    public function jenisPenyakit()
     {
         return $this->belongsTo(\App\Models\JenisPenyakit::class, 'jenis_penyakit');
     }

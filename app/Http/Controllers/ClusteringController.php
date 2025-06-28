@@ -30,33 +30,30 @@ class ClusteringController extends Controller
         $kmeans = new KMeansService(3); // Jumlah cluster
         $hasil = $kmeans->run();
 
+        // Ambil hasil clustering
         $clusters = $hasil['clusters'];
         $centroids = $hasil['centroids'];
         $metrics = $hasil['metrics'];
         $iterations = $hasil['iterations'];
 
         // Ambil dataset & jenis penyakit dari DB
-        $dataset = Dataset::all();
-        $jenisPenyakit = JenisPenyakit::all();
+        $dataset = Dataset::all()->keyBy('id'); // Mengubah dataset menjadi koleksi yang diindeks berdasarkan ID
+        $jenisPenyakit = JenisPenyakit::all()->pluck('name', 'id'); // Ambil jenis penyakit dan memetakannya menjadi ID dan nama
 
         // Gabungkan cluster ke data pasien
-        $datasetClustered = $dataset->map(function ($item) use ($clusters) {
-            $matched = collect($clusters)->firstWhere('dataset_id', $item->id);
-            if ($matched) {
-                $item->cluster = $matched['cluster'];
+        foreach ($clusters as $cluster) {
+            if (isset($dataset[$cluster['dataset_id']])) {
+                $dataset[$cluster['dataset_id']]->cluster = $cluster['cluster'];
             }
-            return $item;
-        });
-        return response()->json([
-            'hasil' => $hasil,
-        ]);
+        }
+
         // Kirim semua data ke view
         return view('clustering', [
             'clusters' => $clusters,
             'centroids' => $centroids,
             'metrics' => $metrics,
             'iterations' => $iterations,
-            'datasetClustered' => $datasetClustered,
+            'datasetClustered' => $dataset->values(), // Menggunakan values() untuk mengembalikan collection sebagai array
             'jenisPenyakit' => $jenisPenyakit,
         ]);
     }

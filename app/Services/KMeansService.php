@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Dataset;
+use App\Models\JenisPenyakit;
 use Illuminate\Support\Collection;
 
 class KMeansService
@@ -20,20 +21,31 @@ class KMeansService
     {
         // 1. Ambil dan transform data
         $data = Dataset::all()->map(function ($item) {
+            // Mengambil ID jenis penyakit berdasarkan namanya
+            // Deteksi pintar: samakan lowercase dan hapus spasi untuk pencocokan
+            $penyakitName = strtolower(preg_replace('/\s+/', '', $item->jenis_penyakit));
+            $penyakitId = JenisPenyakit::all()
+                ->first(function ($jp) use ($penyakitName) {
+                    return strtolower(preg_replace('/\s+/', '', $jp->name)) === $penyakitName;
+                })?->id;
+
             return [
-                'usia' => $item->kelompok_usia,
-                'jk' => $item->jenis_kelamin,
-                'penyakit' => $item->jenis_penyakit,
+                'usia' => $this->mapUsia($item->kelompok_usia),
+                'jk' => $this->mapKelamin($item->jenis_kelamin),
+                'penyakit_id' => $penyakitId, // Gunakan ID penyakit yang ditemukan
                 'id' => $item->id,
-                'dataset_id' => $item->dataset_id
+                'dataset_id' => $item->id,
             ];
         });
+        // dd($data->toArray());
+        // Filter out items where penyakit_id is null
+        $data = $data->filter(fn($item) => $item['penyakit_id'] !== null);
 
         if ($data->isEmpty()) {
-            throw new \Exception('Data tidak ditemukan');
+            throw new \Exception('Data tidak ditemukan atau semua jenis penyakit tidak valid');
         }
 
-        $points = $data->map(fn($item) => [$item['usia'], $item['jk'], $item['penyakit']])->values()->all();
+        $points = $data->map(fn($item) => [$item['usia'], $item['jk'], $item['penyakit_id']])->values()->all();
 
         // 2. Inisialisasi centroid dengan K-means++ atau random dengan seed
         $centroids = $this->initializeCentroids($points, $this->k);
@@ -87,70 +99,14 @@ class KMeansService
             }
         }
 
-        // 7. Hitung metrik evaluasi
-        $silhouette = $this->calculateSilhouetteScore($points, $labels, $this->k);
-        $wcss = $this->calculateWCSS($clusters, $centroids, $points);
-        $dbi = $this->calculateDaviesBouldinIndex($clusters, $centroids, $points);
-
-        // Reset iterationDetails sebelum memulai
-        $this->iterationDetails = [];
-
-        for ($iteration = 0; $iteration < $this->maxIterations; $iteration++) {
-            $clusters = array_fill(0, $this->k, []);
-
-            // Rekam detail iterasi
-            $iterationDetail = [
-                'iteration' => $iteration + 1,
-                'centroids' => $centroids,
-                'point_assignments' => []
-            ];
-
-            // 3. Assign data ke centroid terdekat
-            foreach ($points as $idx => $point) {
-                $distances = array_map(fn($c) => $this->euclideanDistance($point, $c), $centroids);
-                $clusterIndex = array_keys($distances, min($distances))[0];
-                $clusters[$clusterIndex][] = $idx;
-
-                // Rekam detail penugasan titik
-                $iterationDetail['point_assignments'][] = [
-                    'point_index' => $idx,
-                    'point' => $point,
-                    'distances' => $distances,
-                    'assigned_cluster' => $clusterIndex
-                ];
-            }
-
-            // Tambahkan detail iterasi
-            $this->iterationDetails[] = $iterationDetail;
-
-            // 4. Update centroid
-            $newCentroids = [];
-            foreach ($clusters as $cluster) {
-                if (empty($cluster)) {
-                    // Jika cluster kosong, reinisialisasi dengan point random
-                    $newCentroids[] = $points[array_rand($points)];
-                } else {
-                    $clusterPoints = array_map(fn($idx) => $points[$idx], $cluster);
-                    $newCentroids[] = $this->calculateCentroid($clusterPoints);
-                }
-            }
-
-            // 5. Cek konvergensi dengan toleransi
-            if ($this->hasConverged($centroids, $newCentroids)) {
-                break;
-            }
-
-            $previousCentroids = $centroids;
-            $centroids = $newCentroids;
-        }
-
         $result = [
-            // 'clusters' => $clusterResults,
-            // 'centroids' => $centroids,
-            // 'metrics' => [
-            //     'silhouette' => $silhouette,
-            //     'wcss' => round($wcss, 2),
-            // ],
+            'clusters' => $clusterResults,
+            'centroids' => $centroids,
+            'metrics' => [
+                'silhouette' => $this->calculateSilhouetteScore($points, $labels, $this->k),
+                'wcss' => $this->calculateWCSS($clusters, $centroids, $points),
+                'dbi' => $this->calculateDaviesBouldinIndex($clusters, $centroids, $points),
+            ],
             'iterations' => $iteration + 1,
             'iteration_details' => $this->iterationDetails // Tambahkan detail iterasi
         ];
@@ -401,14 +357,22 @@ class KMeansService
             '0-7 hari' => 1,
             '8-28 hari' => 2,
             '1-11 bulan' => 3,
-            '1-4 tahun' => 4,
-            '5-9 tahun' => 5,
-            '10-14 tahun' => 6,
-            '15-19 tahun' => 7,
-            '20-44 tahun' => 8,
-            '45-59 tahun' => 9,
-            '>59 tahun' => 10,
+            '1-4 thn' => 4,
+            '5-9 thn' => 5,
+            '10-14 thn' => 6,
+            '15-19 thn' => 7,
+            '20-44 thn' => 8,
+            '45-59 thn' => 9,
+            '> 59 thn' => 10,
             default => 0
+        };
+    }
+
+    private function mapKelamin(string $jenisKelamin): int
+    {
+        return match (trim($jenisKelamin)) {
+            'Laki-laki' => 1,
+            'Perempuan' => 2,
         };
     }
 
