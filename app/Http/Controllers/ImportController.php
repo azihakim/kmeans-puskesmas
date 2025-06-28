@@ -20,10 +20,25 @@ class ImportController extends Controller
         Excel::import($import, $file);
 
         // Dapatkan penyakit tanpa kasus
-        $penyakitTanpaKasus = $import->getPenyakitTanpaKasus();
-        dd($penyakitTanpaKasus);
-        return redirect()->back()
+        $penyakitTanpaKasus = $import->getPenyakitTanpaKasus(); // Ambil penyakit tanpa kasus
+        $importResults = $import->getDatasets();
+        $countPenyakitTanpaKasus = count($penyakitTanpaKasus);
+
+        return redirect()->route('import.detail')
             ->with('success', 'Data berhasil diimpor')
-            ->with('penyakit_tanpa_kasus', $penyakitTanpaKasus);
+            ->with('penyakit_tanpa_kasus', $penyakitTanpaKasus)
+            ->with('count_penyakit_tanpa_kasus', $countPenyakitTanpaKasus)
+            ->with('import_results', $importResults); // Menyimpan hasil import di session
+    }
+
+    public function detailImport()
+    {
+        $penyakitTanpaKasus = session('penyakit_tanpa_kasus', []);
+        $countPenyakitTanpaKasus = session('count_penyakit_tanpa_kasus', 0);
+
+        // Ambil hasil import dari session jika ada
+        $importResults = session('import_results', []); // Anda dapat menyimpan hasil seperti nama, deskripsi, dll.
+
+        return view('detailImport', compact('penyakitTanpaKasus', 'countPenyakitTanpaKasus', 'importResults'));
     }
 }

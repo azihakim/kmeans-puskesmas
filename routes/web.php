@@ -11,3 +11,5 @@ Route::get('/cluster-kmeans', [ClusteringController::class, 'proses'])->name('cl
 Route::get('/elbow', [ClusteringController::class, 'elbow'])->name('cluster.elbow');
 Route::get('/import', [ImportController::class, 'index'])->name('import');
 Route::post('/import', [ImportController::class, 'import'])->name('import.store');
+Route::get('/import/detail', [ImportController::class, 'detailImport'])->name('import.detail');
+Route::get('/dataset/empty', [\App\Http\Controllers\Admin\DatasetCrudController::class, 'emptyDataset'])->name('dataset.empty');

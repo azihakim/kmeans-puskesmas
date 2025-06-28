@@ -9,11 +9,11 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class DatasetImport implements ToModel, WithHeadingRow
 {
     private $penyakitTanpaKasus = [];
+    private $datasets_result = [];
 
     public function model(array $row)
     {
         $datasets = [];
-
         // Daftar kolom usia dengan nama sesuai array
         $ageColumns = [
             '0_7_hari',
@@ -91,6 +91,7 @@ class DatasetImport implements ToModel, WithHeadingRow
                 }
             }
         }
+        $this->datasets_result = array_merge($this->datasets_result, $datasets);
 
         return $datasets;
     }
@@ -136,5 +137,9 @@ class DatasetImport implements ToModel, WithHeadingRow
     public function getPenyakitTanpaKasus(): array
     {
         return $this->penyakitTanpaKasus;
+    }
+    public function getDatasets(): array
+    {
+        return $this->datasets_result; // Kembalikan semua dataset yang telah diproses
     }
 }

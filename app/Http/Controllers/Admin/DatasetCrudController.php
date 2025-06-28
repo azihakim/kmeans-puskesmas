@@ -40,33 +40,34 @@ class DatasetCrudController extends CrudController
     protected function setupListOperation()
     {
         CRUD::setFromDb(); // set columns from db columns.
-        CRUD::column('kelompok_usia')
-            ->label('Kelompok Usia')
-            ->type('select')
-            ->entity('kelompokusia')
-            ->model(\App\Models\KelompokUsia::class)
-            ->attribute('name');
+        // CRUD::column('kelompok_usia')
+        //     ->label('Kelompok Usia')
+        //     ->type('select')
+        //     ->entity('kelompokusia')
+        //     ->model(\App\Models\KelompokUsia::class)
+        //     ->attribute('name');
 
-        CRUD::column('jenis_kelamin')
-            ->label('Jenis Kelamin')
-            ->type('select_from_array')
-            ->options([
-                1 => 'Laki-laki',
-                2 => 'Perempuan',
-            ]);
+        // CRUD::column('jenis_kelamin')
+        //     ->label('Jenis Kelamin')
+        //     ->type('select_from_array')
+        //     ->options([
+        //         1 => 'Laki-laki',
+        //         2 => 'Perempuan',
+        //     ]);
 
-        CRUD::column('jenis_penyakit')
-            ->label('Jenis Penyakit')
-            ->type('select')
-            ->entity('jenispenyakit')
-            ->model(\App\Models\JenisPenyakit::class)
-            ->attribute('name');
+        // CRUD::column('jenis_penyakit')
+        //     ->label('Jenis Penyakit')
+        //     ->type('select')
+        //     ->entity('jenispenyakit')
+        //     ->model(\App\Models\JenisPenyakit::class)
+        //     ->attribute('name');
         $this->crud->addButtonFromView('top', 'kmeans', 'kmeans', 'end');
         /**
          * Columns can be defined using the fluent syntax:
          * - CRUD::column('price')->type('number');
          */
         $this->crud->addButtonFromView('top', 'import_excell', 'import_excell');
+        $this->crud->addButtonFromView('top', 'empty_dataset', 'empty_dataset');
     }
 
     /**
@@ -126,5 +127,12 @@ class DatasetCrudController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+    }
+
+    public function emptyDataset()
+    {
+        \App\Models\Dataset::truncate();
+        return redirect()->back()
+            ->with('success', 'Dataset berhasil dikosongkan');
     }
 }
