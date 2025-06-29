@@ -35,6 +35,7 @@ class ClusteringController extends Controller
         $centroids = $hasil['centroids'];
         $metrics = $hasil['metrics'];
         $iterations = $hasil['iterations'];
+        $dataTransformed = $hasil['data_transformed'];
 
         // Ambil dataset & jenis penyakit dari DB
         $dataset = Dataset::all()->keyBy('id'); // Mengubah dataset menjadi koleksi yang diindeks berdasarkan ID
@@ -55,6 +56,7 @@ class ClusteringController extends Controller
             'iterations' => $iterations,
             'datasetClustered' => $dataset->values(), // Menggunakan values() untuk mengembalikan collection sebagai array
             'jenisPenyakit' => $jenisPenyakit,
+            'dataTransformed' => $dataTransformed,
         ]);
     }
 

@@ -12,6 +12,7 @@ class KMeansService
     protected int $maxIterations = 100;
     protected float $tolerance = 1e-6; // Toleransi untuk konvergensi
     protected array $iterationDetails = [];
+    protected $dataTransformed = [];
     public function __construct(int $k = 3)
     {
         $this->k = $k;
@@ -37,6 +38,7 @@ class KMeansService
                 'dataset_id' => $item->id,
             ];
         });
+        $this->dataTransformed = $data->toArray();
         // dd($data->toArray());
         // Filter out items where penyakit_id is null
         $data = $data->filter(fn($item) => $item['penyakit_id'] !== null);
@@ -108,7 +110,8 @@ class KMeansService
                 'dbi' => $this->calculateDaviesBouldinIndex($clusters, $centroids, $points),
             ],
             'iterations' => $iteration + 1,
-            'iteration_details' => $this->iterationDetails // Tambahkan detail iterasi
+            'iteration_details' => $this->iterationDetails,
+            'data_transformed' => $this->dataTransformed,
         ];
 
         return $result;
