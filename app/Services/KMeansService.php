@@ -113,7 +113,7 @@ class KMeansService
             'iteration_details' => $this->getDetailedIterationProcess($points, $this->k),
             'data_transformed' => $this->dataTransformed,
         ];
-        dd($result);
+        // dd($result);
         return $result;
     }
 
