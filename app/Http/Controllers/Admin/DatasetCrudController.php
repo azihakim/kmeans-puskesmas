@@ -61,11 +61,18 @@ class DatasetCrudController extends CrudController
         //     ->entity('jenispenyakit')
         //     ->model(\App\Models\JenisPenyakit::class)
         //     ->attribute('name');
+        CRUD::column('cluster')
+            ->label('Cluster')
+            ->type('select_from_array')
+            ->options([
+                1 => 'Cluster 1',
+                2 => 'Cluster 2',
+                3 => 'Cluster 3',
+                4 => 'Cluster 4',
+                5 => 'Cluster 5',
+            ]);
+
         $this->crud->addButtonFromView('top', 'kmeans', 'kmeans', 'end');
-        /**
-         * Columns can be defined using the fluent syntax:
-         * - CRUD::column('price')->type('number');
-         */
         $this->crud->addButtonFromView('top', 'import_excell', 'import_excell');
         $this->crud->addButtonFromView('top', 'empty_dataset', 'empty_dataset');
     }

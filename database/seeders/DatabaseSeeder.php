@@ -16,10 +16,10 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@test.com',
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@test.com',
+        // ]);
 
         // Seeder untuk tabel jenis_penyakit
         $jenisPenyakit = [
@@ -260,7 +260,7 @@ class DatabaseSeeder extends Seeder
             ['id' => 235, 'name' => 'Vaginitis'],
             ['id' => 236, 'name' => 'Vulvitis'],
         ];
-        \DB::table('jenis_penyakits')->insert($jenisPenyakit);
+        // \DB::table('jenis_penyakits')->insert($jenisPenyakit);
 
         // Dataset::truncate();
         // $data = [
@@ -283,16 +283,41 @@ class DatabaseSeeder extends Seeder
         $kelompokUsia = [
             ['id' => 1, 'name' => '0-7 hari'],
             ['id' => 2, 'name' => '8-28 hari'],
-            ['id' => 3, 'name' => '1-11 bulan'],
-            ['id' => 4, 'name' => '1-4 tahun'],
-            ['id' => 5, 'name' => '5-9 tahun'],
-            ['id' => 6, 'name' => '10-14 tahun'],
-            ['id' => 7, 'name' => '15-19 tahun'],
-            ['id' => 8, 'name' => '20-44 tahun'],
-            ['id' => 9, 'name' => '45-59 tahun'],
-            ['id' => 10, 'name' => '>59 tahun'],
+            ['id' => 3, 'name' => '1-11 bln'],
+            ['id' => 4, 'name' => '1-4 thn'],
+            ['id' => 5, 'name' => '5-9 thn'],
+            ['id' => 6, 'name' => '10-14 thn'],
+            ['id' => 7, 'name' => '15-19 thn'],
+            ['id' => 8, 'name' => '20-44 thn'],
+            ['id' => 9, 'name' => '45-59 thn'],
+            ['id' => 10, 'name' => '> 59 thn'],
         ];
 
         // \DB::table('kelompok_usias')->insert($kelompokUsia);
+
+        $testData = [
+            // Cluster 1: Anak-anak dengan penyakit ringan
+            ['pasien' => 'P1', 'usia' => '1-4 thn', 'jk' => 'Laki-laki', 'jenis_penyakit' => 'Alergi makanan'],
+            ['pasien' => 'P2', 'usia' => '5-9 thn', 'jk' => 'Perempuan', 'jenis_penyakit' => 'Alergi makanan'],
+            ['pasien' => 'P3', 'usia' => '1-4 thn', 'jk' => 'Laki-laki', 'jenis_penyakit' => 'Vulvitis'],
+
+            // Cluster 2: Dewasa dengan penyakit berat
+            ['pasien' => 'P4', 'usia' => '20-44 thn', 'jk' => 'Laki-laki', 'jenis_penyakit' => 'b. Pneumonia'],
+            ['pasien' => 'P5', 'usia' => '20-44 thn', 'jk' => 'Perempuan', 'jenis_penyakit' => 'b. Pneumonia'],
+            ['pasien' => 'P6', 'usia' => '45-59 thn', 'jk' => 'Laki-laki', 'jenis_penyakit' => 'Fimosis'],
+
+            // Cluster 3: Lansia dengan penyakit kompleks
+            ['pasien' => 'P7', 'usia' => '> 59 thn', 'jk' => 'Perempuan', 'jenis_penyakit' => 'Sifilis'],
+            ['pasien' => 'P8', 'usia' => '> 59 thn', 'jk' => 'Laki-laki', 'jenis_penyakit' => 'Sifilis'],
+            ['pasien' => 'P9', 'usia' => '45-59 thn', 'jk' => 'Perempuan', 'jenis_penyakit' => 'Infeksi pada Umbilikus']
+        ];
+        foreach ($testData as $data) {
+            Dataset::create([
+                'pasien' => $data['pasien'],
+                'kelompok_usia' => $data['usia'],
+                'jenis_kelamin' => $data['jk'],
+                'jenis_penyakit' => $data['jenis_penyakit']
+            ]);
+        }
     }
 }

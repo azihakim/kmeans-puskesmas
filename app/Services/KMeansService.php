@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 class KMeansService
 {
     protected int $k;
-    protected int $maxIterations = 100;
+    protected int $maxIterations = 2;
     protected float $tolerance = 1e-6; // Toleransi untuk konvergensi
     protected array $iterationDetails = [];
     protected $dataTransformed = [];
@@ -110,16 +110,95 @@ class KMeansService
                 'dbi' => $this->calculateDaviesBouldinIndex($clusters, $centroids, $points),
             ],
             'iterations' => $iteration + 1,
-            'iteration_details' => $this->iterationDetails,
+            'iteration_details' => $this->getDetailedIterationProcess($points, $this->k),
             'data_transformed' => $this->dataTransformed,
         ];
-
+        dd($result);
         return $result;
     }
 
-    public function getIterationDetails(): array
+    public function getDetailedIterationProcess(array $points, int $k): array
     {
-        return $this->iterationDetails;
+        // Inisialisasi centroid dengan K-means++
+        $centroids = $this->initializeCentroids($points, $k);
+
+        // Array untuk menyimpan detail setiap iterasi
+        $iterationDetails = [];
+
+        for ($iteration = 0; $iteration < $this->maxIterations; $iteration++) {
+            // Reset clusters
+            $clusters = array_fill(0, $k, []);
+
+            // Tahap Assignment (Assign data ke centroid terdekat)
+            $assignmentDetails = [];
+            foreach ($points as $idx => $point) {
+                // Hitung jarak ke setiap centroid
+                $distances = array_map(fn($c) => $this->euclideanDistance($point, $c), $centroids);
+
+                // Temukan centroid terdekat
+                $clusterIndex = array_keys($distances, min($distances))[0];
+                $clusters[$clusterIndex][] = $idx;
+
+                // Simpan detail assignment
+                $assignmentDetails[] = [
+                    'point' => $point,
+                    'distances' => $distances,
+                    'assigned_cluster' => $clusterIndex
+                ];
+            }
+
+            // Tahap Update Centroid
+            $newCentroids = [];
+            $centroidUpdateDetails = [];
+            foreach ($clusters as $clusterIndex => $cluster) {
+                if (empty($cluster)) {
+                    // Jika cluster kosong, reinisialisasi dengan point random
+                    $newCentroids[] = $points[array_rand($points)];
+                    $centroidUpdateDetails[] = [
+                        'cluster' => $clusterIndex,
+                        'status' => 'empty',
+                        'new_centroid' => $newCentroids[count($newCentroids) - 1]
+                    ];
+                } else {
+                    // Hitung centroid baru
+                    $clusterPoints = array_map(fn($idx) => $points[$idx], $cluster);
+                    $newCentroid = $this->calculateCentroid($clusterPoints);
+                    $newCentroids[] = $newCentroid;
+
+                    $centroidUpdateDetails[] = [
+                        'cluster' => $clusterIndex,
+                        'status' => 'updated',
+                        'points_count' => count($cluster),
+                        'old_centroid' => $centroids[$clusterIndex] ?? null,
+                        'new_centroid' => $newCentroid
+                    ];
+                }
+            }
+
+            // Simpan detail iterasi
+            $iterationDetails[] = [
+                'iteration' => $iteration + 1,
+                'centroids' => $centroids,
+                'new_centroids' => $newCentroids,
+                'clusters' => array_map('count', $clusters),
+                'assignment_details' => $assignmentDetails,
+                'centroid_update_details' => $centroidUpdateDetails,
+                'metrics' => [
+                    'wcss' => $this->calculateWCSS($clusters, $centroids, $points),
+                    // Anda bisa menambahkan metrik lain seperti silhouette score
+                ]
+            ];
+
+            // Cek konvergensi
+            if ($this->hasConverged($centroids, $newCentroids)) {
+                break;
+            }
+
+            // Update centroids untuk iterasi selanjutnya
+            $centroids = $newCentroids;
+        }
+
+        return $iterationDetails;
     }
 
     /**

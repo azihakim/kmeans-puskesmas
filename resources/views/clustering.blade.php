@@ -62,6 +62,33 @@
 <body>
 
 	<div class="container">
+		<h3 class="mt-5">Data Transform</h3>
+
+		<div class="table-responsive mt-4">
+			<table id="tableTransformed" class="table table-bordered table-striped">
+				<thead class="table-light">
+					<tr>
+						<th>#</th>
+						<th>Pasien</th>
+						<th>Jenis Penyakit</th>
+						<th>Kelompok Usia</th>
+						<th>Jenis Kelamin</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach ($dataTransformed as $data)
+						<tr>
+							<td>{{ $loop->index + 1 }}</td>
+							<td>{{ $data['dataset_id'] }}</td>
+							<td>{{ $data['penyakit_id'] }}</td> <!-- Menggunakan nama penyakit langsung -->
+							<td>{{ $data['usia'] }}</td>
+							<td>{{ $data['jk'] }}</td>
+						</tr>
+					@endforeach
+				</tbody>
+			</table>
+		</div>
+
 		<h2 class="mb-4">Hasil Analisis Clustering</h2>
 
 		<div class="row">
@@ -109,7 +136,6 @@
 		</div>
 
 		<h3 class="mt-5">Analisis Penyakit Berdasarkan Cluster</h3>
-
 		@php
 			$byCluster = $datasetClustered->groupBy('cluster');
 		@endphp
@@ -213,12 +239,46 @@
 				</script>
 			</div>
 		@endforeach
-
+		<div class="row">
+			<div class="col-md-12 text-end">
+				<form action="{{ route('clusters.store') }}" method="POST" id="saveClustersForm">
+					@csrf
+					<input type="hidden" name="clusters" value="{{ json_encode($clusters) }}">
+					<button type="submit" class="btn btn-success">Simpan Hasil Cluster</button>
+				</form>
+			</div>
+		</div>
 	</div>
 
 	<!-- jQuery and DataTables JS -->
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+	<script>
+		$(document).ready(function() {
+			$('#tableTransformed').DataTable({
+				paging: true,
+				searching: true,
+				ordering: true,
+				lengthChange: true,
+				columns: [{
+						title: "#"
+					},
+					{
+						title: "Pasien"
+					},
+					{
+						title: "Jenis Penyakit"
+					},
+					{
+						title: "Usia"
+					},
+					{
+						title: "Jenis Kelamin"
+					}
+				]
+			});
+		});
+	</script>
 	<script>
 		$(document).ready(function() {
 			// Initialize DataTables for each cluster's table
