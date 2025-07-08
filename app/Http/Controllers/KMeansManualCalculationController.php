@@ -2,25 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dataset;
 use Illuminate\Support\Facades\Log;
 
 class KMeansManualCalculationController extends Controller
 {
     // Data yang diberikan
-    private $data = [
-        ['usia' => 4, 'jk' => 1, 'penyakit_id' => 1],
-        ['usia' => 5, 'jk' => 2, 'penyakit_id' => 1],
-        ['usia' => 4, 'jk' => 1, 'penyakit_id' => 236],
-        ['usia' => 8, 'jk' => 1, 'penyakit_id' => 148],
-        ['usia' => 8, 'jk' => 2, 'penyakit_id' => 148],
-        ['usia' => 9, 'jk' => 1, 'penyakit_id' => 209],
-        ['usia' => 10, 'jk' => 2, 'penyakit_id' => 233],
-        ['usia' => 10, 'jk' => 1, 'penyakit_id' => 233],
-        ['usia' => 9, 'jk' => 2, 'penyakit_id' => 6]
-    ];
+    // private $data = [
+    //     ['usia' => 4, 'jk' => 1, 'penyakit_id' => 1],
+    //     ['usia' => 5, 'jk' => 2, 'penyakit_id' => 1],
+    //     ['usia' => 4, 'jk' => 1, 'penyakit_id' => 236],
+    //     ['usia' => 8, 'jk' => 1, 'penyakit_id' => 148],
+    //     ['usia' => 8, 'jk' => 2, 'penyakit_id' => 148],
+    //     ['usia' => 9, 'jk' => 1, 'penyakit_id' => 209],
+    //     ['usia' => 10, 'jk' => 2, 'penyakit_id' => 233],
+    //     ['usia' => 10, 'jk' => 1, 'penyakit_id' => 233],
+    //     ['usia' => 9, 'jk' => 2, 'penyakit_id' => 6]
+    // ];
 
     public function manualKMeansCalculation()
     {
+        $dataset = Dataset::all();
+        // Transformasi $dataset ke array numerik sesuai kebutuhan KMeans
+        $this->data = $dataset->map(function ($item) {
+            return [
+                'usia' => $this->mapUsia($item->kelompok_usia),
+                'jk' => $this->mapKelamin($item->jenis_kelamin),
+                'penyakit_id' => $this->mapPenyakitId(strtolower(preg_replace('/\s+/', '', $item->jenis_penyakit)))
+            ];
+        })->toArray();
+        // dd($this->data);
         // Konversi data ke array numerik untuk perhitungan
         $points = array_map(function ($item) {
             return [
@@ -40,7 +51,7 @@ class KMeansManualCalculationController extends Controller
         $iterationDetails = [];
 
         // Proses iterasi manual
-        for ($iteration = 0; $iteration < 3; $iteration++) {
+        for ($iteration = 0; $iteration < 4; $iteration++) {
             // Tahap 1: Hitung jarak setiap point ke centroid
             $distanceMatrix = $this->calculateDistanceMatrix($points, $centroids);
 
@@ -70,6 +81,41 @@ class KMeansManualCalculationController extends Controller
 
         // Visualisasi hasil
         return $this->visualizeResults($iterationDetails, $points);
+    }
+
+    private function mapUsia(string $rentang): int
+    {
+        return match (trim($rentang)) {
+            '0-7 hari' => 1,
+            '8-28 hari' => 2,
+            '1-11 bulan' => 3,
+            '1-4 thn' => 4,
+            '5-9 thn' => 5,
+            '10-14 thn' => 6,
+            '15-19 thn' => 7,
+            '20-44 thn' => 8,
+            '45-59 thn' => 9,
+            '> 59 thn' => 10,
+            default => 0
+        };
+    }
+
+    private function mapKelamin(string $jenisKelamin): int
+    {
+        return match (trim($jenisKelamin)) {
+            'Laki-laki' => 1,
+            'Perempuan' => 2,
+        };
+    }
+
+    private function mapPenyakitId(string $penyakitName): int
+    {
+        $penyakitId = \App\Models\JenisPenyakit::all()
+            ->first(function ($jp) use ($penyakitName) {
+                return strtolower(preg_replace('/\s+/', '', $jp->name)) === $penyakitName;
+            })?->id;
+
+        return (int) $penyakitId;
     }
 
     private function initializeCentroids(array $points, int $k)
