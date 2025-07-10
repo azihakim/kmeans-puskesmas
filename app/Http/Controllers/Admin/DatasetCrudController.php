@@ -71,10 +71,17 @@ class DatasetCrudController extends CrudController
                 4 => 'Cluster 4',
                 5 => 'Cluster 5',
             ]);
-
-        $this->crud->addButtonFromView('top', 'kmeans', 'kmeans', 'end');
-        $this->crud->addButtonFromView('top', 'import_excell', 'import_excell');
-        $this->crud->addButtonFromView('top', 'empty_dataset', 'empty_dataset');
+        if (backpack_user()->role === 'pimpinan') {
+            $this->crud->denyAccess('create');
+            $this->crud->denyAccess('update');
+            $this->crud->denyAccess('delete');
+        }
+        if (backpack_user()->role === 'admin') {
+            $this->crud->denyAccess('create');
+            $this->crud->addButtonFromView('top', 'import_excell', 'import_excell');
+            $this->crud->addButtonFromView('top', 'kmeans', 'kmeans', 'end');
+            $this->crud->addButtonFromView('top', 'empty_dataset', 'empty_dataset');
+        }
     }
 
     /**

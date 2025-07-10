@@ -53,6 +53,12 @@ class JenisPenyakitCrudController extends CrudController
             'orderable' => true,
             'priority' => 1, // pastikan tampil di desktop
         ]);
+
+        if (backpack_user()->role === 'pimpinan') {
+            $this->crud->denyAccess('create');
+            $this->crud->denyAccess('update');
+            $this->crud->denyAccess('delete');
+        }
     }
 
     /**

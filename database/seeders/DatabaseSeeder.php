@@ -16,10 +16,16 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@test.com',
-        // ]);
+        User::factory()->create([
+            'name' => 'Admin',
+            'email' => 'admin@test.com',
+            'role' => 'admin',
+        ]);
+        User::factory()->create([
+            'name' => 'Pimpinan',
+            'email' => 'pimpinan@test.com',
+            'role' => 'pimpinan',
+        ]);
 
         // Seeder untuk tabel jenis_penyakit
         $jenisPenyakit = [
@@ -260,7 +266,7 @@ class DatabaseSeeder extends Seeder
             ['id' => 235, 'name' => 'Vaginitis'],
             ['id' => 236, 'name' => 'Vulvitis'],
         ];
-        // \DB::table('jenis_penyakits')->insert($jenisPenyakit);
+        \DB::table('jenis_penyakits')->insert($jenisPenyakit);
 
         // Dataset::truncate();
         // $data = [

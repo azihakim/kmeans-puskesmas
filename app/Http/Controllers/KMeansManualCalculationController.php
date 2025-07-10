@@ -19,19 +19,22 @@ class KMeansManualCalculationController extends Controller
     //     ['usia' => 10, 'jk' => 1, 'penyakit_id' => 233],
     //     ['usia' => 9, 'jk' => 2, 'penyakit_id' => 6]
     // ];
+    private $data = [];
 
     public function manualKMeansCalculation()
     {
         $dataset = Dataset::all();
+
         // Transformasi $dataset ke array numerik sesuai kebutuhan KMeans
         $this->data = $dataset->map(function ($item) {
             return [
+                'pasien' => $item->pasien,
                 'usia' => $this->mapUsia($item->kelompok_usia),
                 'jk' => $this->mapKelamin($item->jenis_kelamin),
                 'penyakit_id' => $this->mapPenyakitId(strtolower(preg_replace('/\s+/', '', $item->jenis_penyakit)))
             ];
         })->toArray();
-        // dd($this->data);
+
         // Konversi data ke array numerik untuk perhitungan
         $points = array_map(function ($item) {
             return [
@@ -52,13 +55,13 @@ class KMeansManualCalculationController extends Controller
 
         // Proses iterasi manual
         for ($iteration = 0; $iteration < 4; $iteration++) {
-            // Tahap 1: Hitung jarak setiap point ke centroid
+            // Hitung jarak setiap point ke centroid
             $distanceMatrix = $this->calculateDistanceMatrix($points, $centroids);
 
-            // Tahap 2: Assignment cluster
+            // Penugasan cluster
             $clusterAssignments = $this->assignToClusters($distanceMatrix);
 
-            // Tahap 3: Hitung centroid baru
+            // Hitung centroid baru
             $newCentroids = $this->calculateNewCentroids($points, $clusterAssignments);
 
             // Simpan detail iterasi
@@ -75,12 +78,22 @@ class KMeansManualCalculationController extends Controller
                 break;
             }
 
-            // Update centroid
+            // Update centroids
             $centroids = $newCentroids;
         }
 
         // Visualisasi hasil
-        return $this->visualizeResults($iterationDetails, $points);
+        $results = $this->visualizeResults($iterationDetails, $points);
+        $wcss = $this->calculateWCSSForMultipleK($results['iterations']);
+
+        // Mengembalikan view dengan data yang diperlukan
+        return view('clustering', [
+            'original_data' => $results['original_data'],
+            'transformed_data' => $results['transformed_data'],
+            'iterations' => $results['iterations'],
+            'clusters' => $results['iterations'][count($results['iterations']) - 1]['clusters'], // Mengambil cluster dari iterasi terakhir
+            'centroids' => $results['iterations'][count($results['iterations']) - 1]['new_centroids'] // Menambahkan centroid terakhir
+        ]);
     }
 
     private function mapUsia(string $rentang): int
@@ -204,7 +217,10 @@ class KMeansManualCalculationController extends Controller
     private function visualizeResults(array $iterationDetails, array $points)
     {
         $result = [
-            'original_data' => $this->data,
+            'original_data' => Dataset::select('pasien', 'jenis_penyakit', 'kelompok_usia', 'jenis_kelamin')
+                ->get()
+                ->toArray(),
+            'transformed_data' => $this->data,
             'iterations' => []
         ];
 
@@ -219,8 +235,12 @@ class KMeansManualCalculationController extends Controller
             // Detail cluster
             foreach ($iteration['cluster_assignments'] as $clusterIndex => $memberIndices) {
                 $clusterMembers = array_map(function ($idx) use ($points) {
+                    // Ambil data pasien berdasarkan index dan kembalikan sebagai bagian dari member
+                    $pasienData = $this->data[$idx] ?? null; // Dapatkan data pasien
+
                     return [
                         'index' => $idx,
+                        'pasien' => $pasienData ? $pasienData['pasien'] : 'Unknown', // Tambahkan nama pasien
                         'point' => $points[$idx]
                     ];
                 }, $memberIndices);
@@ -258,5 +278,92 @@ class KMeansManualCalculationController extends Controller
                 echo "Anggota: " . json_encode($cluster['members']) . "\n\n";
             }
         }
+    }
+
+    public function calculateWCSSForMultipleK()
+    {
+        $dataset = Dataset::all();
+
+        // Transformasi $dataset ke array numerik sesuai kebutuhan KMeans
+        $this->data = $dataset->map(function ($item) {
+            return [
+                'pasien' => $item->pasien,
+                'usia' => $this->mapUsia($item->kelompok_usia),
+                'jk' => $this->mapKelamin($item->jenis_kelamin),
+                'penyakit_id' => $this->mapPenyakitId(strtolower(preg_replace('/\s+/', '', $item->jenis_penyakit)))
+            ];
+        })->toArray();
+
+        // Konversi data ke array numerik untuk perhitungan
+        $points = array_map(function ($item) {
+            return [
+                $item['usia'],
+                $item['jk'],
+                $item['penyakit_id']
+            ];
+        }, $this->data);
+
+        $wcssValues = [];
+
+        // Hitung WCSS untuk k dari 1 sampai 6
+        for ($k = 1; $k <= 6; $k++) {
+            // Inisialisasi centroid awal (manual) - adjusted for k
+            $centroids = $this->initializeCentroids($points, $k);  // Make sure this supports dynamic k
+
+            $iterationDetails = [];
+
+            for ($iteration = 0; $iteration < 4; $iteration++) {
+                // Hitung jarak setiap point ke centroid
+                $distanceMatrix = $this->calculateDistanceMatrix($points, $centroids);
+
+                // Penugasan cluster
+                $clusterAssignments = $this->assignToClusters($distanceMatrix);
+
+                // Hitung centroid baru
+                $newCentroids = $this->calculateNewCentroids($points, $clusterAssignments);
+
+                // Hitung WCSS untuk iterasi ini
+                $wcss = $this->calculateWCSS($points, $clusterAssignments, $newCentroids);
+
+                // Simpan detail iterasi
+                $iterationDetails[] = [
+                    'iteration' => $iteration + 1,
+                    'centroids' => $centroids,
+                    'distance_matrix' => $distanceMatrix,
+                    'cluster_assignments' => $clusterAssignments,
+                    'new_centroids' => $newCentroids,
+                    'wcss' => $wcss // Store WCSS for this iteration
+                ];
+
+                // Cek konvergensi
+                if ($this->checkConvergence($centroids, $newCentroids)) {
+                    break;
+                }
+
+                // Update centroids
+                $centroids = $newCentroids;
+            }
+
+            // Store the WCSS value for this value of k
+            $wcssValues[$k] = end($iterationDetails)['wcss'];  // Store the last WCSS value
+        }
+
+        // Return the WCSS values for each k
+        return $wcssValues;
+    }
+
+    private function calculateWCSS(array $points, array $clusterAssignments, array $centroids)
+    {
+        $wcss = 0;
+
+        foreach ($clusterAssignments as $clusterIndex => $memberIndices) {
+            foreach ($memberIndices as $index) {
+                // Calculate the Euclidean distance from point to its centroid
+                $distance = $this->euclideanDistance($points[$index], $centroids[$clusterIndex]);
+                $wcss += pow($distance, 2); // Add squared distance to WCSS
+            }
+        }
+
+        return $wcss;
     }
 }
