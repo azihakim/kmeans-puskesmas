@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dataset;
+use App\Models\TransformedDataset;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
@@ -25,15 +26,17 @@ class KMeansManualCalculationController extends Controller
 
     public function manualKMeansCalculation()
     {
-        $dataset = Dataset::all();
+        // $dataset = Dataset::all();
+        // Ambil data dari view_hasil_transform (pastikan TransformedDataset model diarahkan ke view ini)
+        $dataset = TransformedDataset::all();
 
         // Transformasi $dataset ke array numerik sesuai kebutuhan KMeans
         $this->data = $dataset->map(function ($item) {
             return [
                 'pasien' => $item->pasien,
-                'usia' => $this->mapUsia($item->kelompok_usia),
-                'jk' => $this->mapKelamin($item->jenis_kelamin),
-                'penyakit_id' => $this->mapPenyakitId(strtolower(preg_replace('/\s+/', '', $item->jenis_penyakit)))
+                'usia' => (int) $item->usia_id,
+                'jk' => (int) $item->kelamin_id,
+                'penyakit_id' => (int) $item->penyakit_id
             ];
         })->toArray();
 
@@ -87,14 +90,56 @@ class KMeansManualCalculationController extends Controller
         // Visualisasi hasil
         $results = $this->visualizeResults($iterationDetails, $points);
         $wcss = $this->calculateWCSSForMultipleK($results['iterations']);
-        // Mengembalikan view dengan data yang diperlukan
+        $calculatePatientStats = $this->calculatePatientStats();
+        // dd($calculatePatientStats);
+
         return view('clustering', [
+            'calculatePatientStats' => $calculatePatientStats,
             'original_data' => $results['original_data'],
             'transformed_data' => $results['transformed_data'],
             'iterations' => $results['iterations'],
             'clusters' => $results['iterations'][count($results['iterations']) - 1]['clusters'], // Mengambil cluster dari iterasi terakhir
             'centroids' => $results['iterations'][count($results['iterations']) - 1]['new_centroids'] // Menambahkan centroid terakhir
         ]);
+    }
+
+    private function calculatePatientStats()
+    {
+        $stats = [
+            'jumlah_per_penyakit' => [],
+            'jumlah_per_jenis_kelamin' => [
+                'laki_laki' => 0,
+                'perempuan' => 0,
+            ],
+            'jumlah_per_usia' => [],
+        ];
+
+        foreach ($this->data as $patient) {
+            // Hitung jumlah pasien berdasarkan penyakit
+            $penyakit = $patient['penyakit_id'];
+            if (!isset($stats['jumlah_per_penyakit'][$penyakit])) {
+                $stats['jumlah_per_penyakit'][$penyakit] = 0;
+            }
+            $stats['jumlah_per_penyakit'][$penyakit]++;
+
+            // Hitung jumlah pasien berdasarkan jenis kelamin
+            if ($patient['jk'] == 1) {
+                // Laki-laki
+                $stats['jumlah_per_jenis_kelamin']['laki_laki']++;
+            } elseif ($patient['jk'] == 2) {
+                // Perempuan
+                $stats['jumlah_per_jenis_kelamin']['perempuan']++;
+            }
+
+            // Hitung jumlah pasien berdasarkan usia
+            $usia = $patient['usia'];
+            if (!isset($stats['jumlah_per_usia'][$usia])) {
+                $stats['jumlah_per_usia'][$usia] = 0;
+            }
+            $stats['jumlah_per_usia'][$usia]++;
+        }
+
+        return $stats;
     }
 
     public function updateDatasetClusters(Request $request)
@@ -142,15 +187,14 @@ class KMeansManualCalculationController extends Controller
         return match (trim($rentang)) {
             '0-7 hari' => 1,
             '8-28 hari' => 2,
-            '1-11 bulan' => 3,
+            '1-11 bln' => 3,
             '1-4 thn' => 4,
             '5-9 thn' => 5,
             '10-14 thn' => 6,
             '15-19 thn' => 7,
             '20-44 thn' => 8,
             '45-59 thn' => 9,
-            '> 59 thn' => 10,
-            default => 0
+            '> 59' => 10,
         };
     }
 
