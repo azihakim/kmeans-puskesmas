@@ -393,7 +393,7 @@
 			<div class="col-md-12 text-end">
 				<form action="{{ route('clusters.store') }}" method="POST" id="saveClustersForm">
 					@csrf
-					<input type="hidden" name="clusters" value="{{ json_encode($iterations[0]['clusters']) }}">
+					<input type="hidden" name="cluster_assignments" value="{{ json_encode($iterations[0]['clusters']) }}">
 					<button type="submit" class="btn btn-success">Simpan Hasil Cluster</button>
 				</form>
 			</div>

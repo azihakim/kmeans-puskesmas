@@ -80,9 +80,10 @@ class DatasetImport implements ToModel, WithHeadingRow
 
                 // Buat dataset sesuai distribusi
                 foreach ($distribusi as $jenisKelamin => $jumlah) {
+                    static $globalPatientCounter = 1;
                     for ($i = 0; $i < $jumlah; $i++) {
                         $datasets[] = new Dataset([
-                            'pasien' => 'P' . (count($datasets) + 1),
+                            'pasien' => 'P' . $globalPatientCounter++,
                             'jenis_penyakit' => $row['jenis_penyakit'],
                             'kelompok_usia' => $readableAgeColumn,
                             'jenis_kelamin' => $jenisKelamin

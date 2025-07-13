@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Dataset;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+
 
 class KMeansManualCalculationController extends Controller
 {
@@ -85,7 +87,6 @@ class KMeansManualCalculationController extends Controller
         // Visualisasi hasil
         $results = $this->visualizeResults($iterationDetails, $points);
         $wcss = $this->calculateWCSSForMultipleK($results['iterations']);
-
         // Mengembalikan view dengan data yang diperlukan
         return view('clustering', [
             'original_data' => $results['original_data'],
@@ -94,6 +95,46 @@ class KMeansManualCalculationController extends Controller
             'clusters' => $results['iterations'][count($results['iterations']) - 1]['clusters'], // Mengambil cluster dari iterasi terakhir
             'centroids' => $results['iterations'][count($results['iterations']) - 1]['new_centroids'] // Menambahkan centroid terakhir
         ]);
+    }
+
+    public function updateDatasetClusters(Request $request)
+    {
+        $clustersJson = $request->input('cluster_assignments', '');
+
+        // Decode the JSON string into an associative array
+        $clusters = json_decode($clustersJson, true);
+
+        // Check if decoding was successful and if the result is an array
+        if (!is_array($clusters)) {
+            return response()->json(['status' => 'error', 'message' => 'Invalid cluster data'], 400);
+        }
+
+        foreach ($clusters as $cluster) {
+            $clusterNumber = $cluster['cluster'] ?? null;
+            if (is_null($clusterNumber)) {
+                \Log::warning('Cluster number is null', $cluster);
+                continue;
+            }
+
+            if (!isset($cluster['members']) || !is_array($cluster['members'])) {
+                \Log::warning('Members are missing or not an array', $cluster);
+                continue;
+            }
+
+            foreach ($cluster['members'] as $member) {
+                $pasienName = $member['pasien'] ?? null;
+                if (is_null($pasienName)) {
+                    \Log::warning('Pasien name is null', $member);
+                    continue;
+                }
+
+                $updatedRows = Dataset::where('pasien', $pasienName)->update(['cluster' => $clusterNumber]);
+                if ($updatedRows === 0) {
+                    \Log::warning('No rows updated for pasien: ' . $pasienName);
+                }
+            }
+        }
+        return redirect()->route('dataset.index')->with('success', 'Hasil cluster berhasil disimpan!');
     }
 
     private function mapUsia(string $rentang): int
